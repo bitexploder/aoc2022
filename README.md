@@ -11,6 +11,6 @@ The primary goal of AoC for 2022 was to learn Rust and scratch an itch. Many sol
 * Over-engineered on purpose
 * etc. 
 
-If a solution presented a Rust feature I had not done much with yet, I used it as a learning opportunity.
+If a solution presented a Rust feature I had used much yet, I used it as a learning opportunity.
 
 _Jeremy_
