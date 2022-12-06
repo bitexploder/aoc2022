@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::error::Error;
 use std::fs;
 
@@ -38,6 +39,41 @@ fn find_unique_window_pos(winsize: usize, comm: &str) -> i32 {
 
     unique_pos
 }
+
+fn check_winsize(w: usize, s: String) {
+    if s.len() == w {}
+}
+
+// Functional style
+fn find_unique_window_posv2(winsize: usize, comm: &str) -> usize {
+    let windows: Vec<usize> = comm
+        .chars()
+        .collect::<Vec<char>>()
+        .windows(winsize)
+        .map(|win| win.iter().unique().collect::<String>().len()) // only need len
+        .take_while(|l| *l != winsize)
+        .collect::<Vec<usize>>();
+
+    windows.len() + winsize
+}
+
+#[test]
+fn test_example_comms2() {
+    let comms: Vec<&str> = TESTCOMMS.split("\n").collect();
+    // find_unique_window_posv2(4, &comms[0]);
+    assert_eq!(5, find_unique_window_posv2(4, &comms[0]));
+    assert_eq!(6, find_unique_window_posv2(4, &comms[1]));
+    assert_eq!(10, find_unique_window_posv2(4, &comms[2]));
+    assert_eq!(11, find_unique_window_posv2(4, &comms[3]));
+
+    let comms2: Vec<&str> = TESTCOMMS2.split("\n").collect();
+    assert_eq!(19, find_unique_window_posv2(14, &comms2[0]));
+    assert_eq!(23, find_unique_window_posv2(14, &comms2[1]));
+    assert_eq!(23, find_unique_window_posv2(14, &comms2[2]));
+    assert_eq!(29, find_unique_window_posv2(14, &comms2[3]));
+    assert_eq!(26, find_unique_window_posv2(14, &comms2[4]));
+}
+
 #[test]
 fn test_example_comms() {
     let comms: Vec<&str> = TESTCOMMS.split("\n").collect();
@@ -56,9 +92,9 @@ fn test_example_comms() {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string("src/puzzle.txt")?;
-    let pos = find_unique_window_pos(4, contents.as_str());
+    let pos = find_unique_window_posv2(4, contents.as_str());
     eprintln!("pos with window 4 = {:?}", pos);
-    let pos = find_unique_window_pos(14, contents.as_str());
+    let pos = find_unique_window_posv2(14, contents.as_str());
     eprintln!("pos with window 14 = {:?}", pos);
     Ok(())
 }
