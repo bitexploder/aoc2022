@@ -16,12 +16,7 @@ impl Range {
         let parts = s.split("-").collect::<Vec<&str>>();
         let start: u32 = parts[0].parse().unwrap();
         let end: u32 = parts[1].parse().unwrap();
-
-        // TODO: Make this a nice loop over iter?
-        let mut set = HashSet::new();
-        for i in start..=end {
-            set.insert(i);
-        }
+        let set = (start..=end).collect();
 
         Self { start, end, set }
     }
