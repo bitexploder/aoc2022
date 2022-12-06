@@ -40,10 +40,6 @@ fn find_unique_window_pos(winsize: usize, comm: &str) -> i32 {
     unique_pos
 }
 
-fn check_winsize(w: usize, s: String) {
-    if s.len() == w {}
-}
-
 // Functional style
 fn find_unique_window_posv2(winsize: usize, comm: &str) -> usize {
     let windows: Vec<usize> = comm
