@@ -4,29 +4,14 @@ use std::fmt;
 use std::fs;
 use std::rc::{Rc, Weak};
 
-#[derive(Debug)]
-struct Cmd<'a> {
-    cmd: &'a str,
-    output: Vec<&'a str>,
-}
-
-impl<'a> Cmd<'a> {
-    fn new(cmd: &'a str) -> Self {
-        return Cmd {
-            cmd: cmd,
-            output: Vec::new(),
-        };
-    }
-}
+type NodeRef = Rc<RefCell<Node>>;
+type ParentRef = Weak<RefCell<Node>>;
 
 #[derive(Debug)]
 struct File {
     name: String,
     size: usize,
 }
-
-type NodeRef = Rc<RefCell<Node>>;
-type ParentRef = Weak<RefCell<Node>>;
 
 #[derive(Debug)]
 struct Node {
@@ -58,14 +43,7 @@ impl Node {
     }
 
     fn get_parent(&self) -> Option<Rc<RefCell<Node>>> {
-        let parent_target = self.parent.as_ref();
-
-        return if parent_target.is_some() {
-            parent_target.unwrap().upgrade()
-        } else {
-            println!("[!!!] get_parent, no parent ref from: {}", self.name);
-            None
-        };
+        self.parent.as_ref().map_or(None, |p| p.upgrade())
     }
 
     fn add_child(parent: &mut NodeRef, child: NodeRef) {
@@ -74,76 +52,36 @@ impl Node {
     }
 
     fn get_child(&self, name: &str) -> Option<NodeRef> {
-        for child in &self.children {
-            if child.borrow().name == name {
-                return Some(child.clone());
-            }
-        }
-
-        None
+        self.children
+            .iter()
+            .filter(|c| c.borrow().name == name)
+            .map(|c| c.clone())
+            .last()
     }
 
     fn init_tree(root: NodeRef, contents: &str) -> NodeRef {
-        let cmd_lines: Vec<&str> = contents.split("\n").collect();
-        let cmds = get_cmds(cmd_lines);
-        let groot = root.clone();
-        let mut cur_node = root;
-
-        for cmd in &cmds[1..] {
-            // eprintln!("cmd = {:?}, cur_node = {:?}", cmd, cur_node.borrow().name);
-
-            match &cmd.cmd.split(" ").collect::<Vec<&str>>()[..] {
-                ["ls"] => {
-                    for out in &cmd.output {
-                        match out.split(" ").collect::<Vec<&str>>()[..] {
-                            ["dir", directory] => {
-                                // Create child
-                                Node::add_child(
-                                    &mut cur_node,
-                                    Node::new_noderef(Node::new(directory)),
-                                );
-                            }
-                            [size, filename] => {
-                                // Create file
-                                cur_node
-                                    .borrow_mut()
-                                    .add_file(filename, size.parse().unwrap());
-                            }
-                            _ => {
-                                println!("!!!");
-                            }
-                        }
-                    }
+        let lines: Vec<&str> = contents.split("\n").collect();
+        let root = Node::new_noderef(Node::new("/"));
+        let mut cur: NodeRef = root.clone();
+        for line in &lines[1..] {
+            match line.split(" ").collect::<Vec<&str>>()[..] {
+                ["$", "ls"] => {}
+                ["$", "cd", ".."] => {
+                    cur = cur.clone().borrow().get_parent().unwrap();
                 }
-
-                ["cd", ".."] => {
-                    let parent = cur_node.borrow().get_parent();
-                    if parent.is_some() {
-                        cur_node = parent.unwrap();
-                    } else {
-                        println!("[!!!] cd .. error -- no parent");
-                    }
+                ["$", "cd", directory] => {
+                    cur = cur.clone().borrow().get_child(directory).unwrap();
                 }
-
-                ["cd", directory] => {
-                    // Find child
-                    let child = cur_node.borrow().get_child(directory);
-                    if child.is_some() {
-                        cur_node = child.unwrap();
-                    } else {
-                        println!("[!!!] get_child error, no child");
-                    }
-
-                    // Update cur_node
+                ["dir", name] => {
+                    Node::add_child(&mut cur, Node::new_noderef(Node::new(name)));
                 }
-
-                _ => {
-                    println!("!!!");
+                [size, name] => {
+                    cur.borrow_mut().add_file(name, size.parse().unwrap());
                 }
+                _ => {}
             }
         }
-
-        groot
+        root.clone()
     }
 
     fn dirsize(&self, size: usize) -> usize {
@@ -187,48 +125,6 @@ impl Node {
 
         size
     }
-
-    fn fmt_internal(&self, f: &mut fmt::Formatter, depth: usize) -> fmt::Result {
-        let res = write!(f, "{} - {}\n", " ".repeat(depth * 2), self.name);
-        for file in &self.files {
-            let _ = write!(
-                f,
-                "{} * {} {}\n",
-                " ".repeat((depth + 1) * 2),
-                file.size,
-                file.name
-            );
-        }
-        for child in &self.children {
-            let t = child.borrow();
-            let _ = t.fmt_internal(f, depth + 1);
-        }
-        res
-    }
-}
-
-impl fmt::Display for Node {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_internal(f, 0)
-    }
-}
-
-fn get_cmds(cmd_lines: Vec<&str>) -> Vec<Cmd> {
-    let mut cmds: Vec<Cmd> = Vec::new();
-
-    let mut _tmpcmd = Cmd::new("");
-
-    for cmd in cmd_lines {
-        if &cmd[0..1] == "$" {
-            _tmpcmd = Cmd::new(&cmd[2..]);
-            cmds.push(_tmpcmd); // moving tmpcmd into cmds
-        } else {
-            let curcmd = cmds.len() - 1;
-            cmds[curcmd].output.push(cmd);
-        }
-    }
-
-    cmds
 }
 
 fn part1(root: NodeRef) -> usize {
