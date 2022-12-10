@@ -1,0 +1,47 @@
+#[test]
+fn test_node() {
+    let mut root = Rc::new(RefCell::new(Node::new("/")));
+
+    root.borrow_mut().add_file("cat.txt", 123);
+    root.borrow_mut().add_file("goat.dat", 321);
+
+    let a = Node::new("a");
+    let b = Node::new("b");
+    let c = Node::new("c");
+    let d = Node::new("d");
+
+    Node::add_child(&mut root, Rc::new(RefCell::new(a)));
+    Node::add_child(&mut root, Rc::new(RefCell::new(b)));
+    Node::add_child(&mut root, Rc::new(RefCell::new(c)));
+    Node::add_child(&mut root, Rc::new(RefCell::new(d)));
+
+    if let Some(mut child_d) = root.borrow().get_child("d") {
+        child_d.borrow_mut().add_file("dog.dat", 1337);
+
+        assert_eq!(child_d.borrow().get_parent().unwrap().borrow().name, "/");
+    };
+
+    for child in root.borrow().children.iter() {
+        let c = child.borrow();
+        eprintln!("child.name = {:?}", child.borrow().name);
+        if c.files.len() > 0 {
+            print!("   - files = {:?}", c.files);
+        }
+        eprintln!(
+            "child.parent = {:?}",
+            c.get_parent().unwrap().borrow() // c.parent.as_ref().unwrap().upgrade().unwrap().borrow()
+        )
+    }
+
+    let mut stack: Vec<&NodeRef> = Vec::new();
+    stack.push(&root);
+    let a: &NodeRef = &root.borrow().children[0];
+    stack.push(a);
+
+    println!("{}", root.borrow());
+
+    assert_eq!(root.borrow().children.len(), 4);
+}
+
+#[test]
+fn test_sample() {}
