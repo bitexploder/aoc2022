@@ -40,7 +40,6 @@ fn vec_vis(tree: &u32, tree_row: &[u32], rev: bool) -> bool {
     }
 }
 
-// Only run this if view corridor is good
 fn vec_vis_cnt(tree: &u32, tree_row: &[u32], rev: bool) -> u32 {
     let mut cnt = 0;
 
