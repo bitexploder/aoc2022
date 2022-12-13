@@ -115,6 +115,21 @@ fn moves_from_vec(lines: Vec<&str>) -> Vec<Point> {
         .collect::<Vec<Point>>()
 }
 
+fn render_seen(seen: &HashSet<Point>, dim: (i32, i32, i32, i32)) -> String {
+    let mut s: String = String::new();
+    for y in (dim.2..(dim.3 + 1)).rev() {
+        for x in dim.0..(dim.1 + 1) {
+            if seen.get(&Point::new(x, y, Dir::L)).is_some() {
+                s.push('#');
+            } else {
+                s.push('.')
+            }
+        }
+        s.push('\n');
+    }
+    s
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string("src/puzzle.txt")?;
     let lines: Vec<&str> = contents.split("\n").collect::<Vec<&str>>();
@@ -124,6 +139,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("seen = {:?}", seen.len());
     let (seen, _, _) = perform_moves_n(moves, 9);
     eprintln!("seen = {:?}", seen.len());
+
+    let minx = seen.iter().map(|p| p.x).min().unwrap_or(0);
+    let maxx = seen.iter().map(|p| p.x).max().unwrap_or(0);
+    let miny = seen.iter().map(|p| p.y).min().unwrap_or(0);
+    let maxy = seen.iter().map(|p| p.y).max().unwrap_or(0);
+
+    print!("{}", render_seen(&seen, (minx, maxx, miny, maxy)));
 
     Ok(())
 }
