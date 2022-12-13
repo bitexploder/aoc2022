@@ -1,11 +1,11 @@
 use std::error::Error;
 use std::fs;
 
+const TARGET_CYCLES: &[u32] = &[20, 60, 100, 140, 180, 220];
+
 // Part 1
 fn check_cycle(ss: &mut Vec<u32>, cycle: u32, reg: i32) {
-    let target_cycles: Vec<u32> = vec![20, 60, 100, 140, 180, 220];
-
-    if target_cycles.contains(&cycle) {
+    if TARGET_CYCLES.contains(&cycle) {
         ss.push(cycle * reg as u32);
     }
 }

@@ -80,6 +80,27 @@ fn find_unique_window_posv3(winsize: usize, comm: &str) -> i32 {
     unique_pos
 }
 
+fn find_unique_window_posv4(winsize: usize, comm: &str) -> i32 {
+    let mut unique_pos: i32 = -1;
+    let mut bits: u32 = 0;
+    let cbytes = comm.as_bytes();
+
+    for (i, _) in cbytes.iter().enumerate() {
+        if i > winsize - 1 {
+            let window = &cbytes[i - winsize..i];
+            for c in window {
+                bits = bits | 1 << (c - 97) as usize;
+            }
+            if bits.count_ones() == winsize as u32 {
+                unique_pos = (i + 1) as i32;
+                break;
+            }
+        }
+        bits = 0;
+    }
+    unique_pos
+}
+
 #[test]
 fn test_bitvecs() {
     let astr: Vec<u8> = vec![10, 11, 12, 10];
@@ -145,11 +166,14 @@ fn test_example_comms() {
     assert_eq!(26, find_unique_window_pos(14, &comms2[4]));
 }
 
+/*pos with window 4 = 1910
+pos with window 14 = 3381
+*/
 fn main() -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string("src/puzzle.txt")?;
-    let pos = find_unique_window_posv3(4, contents.as_str());
+    let pos = find_unique_window_posv4(4, contents.as_str());
     eprintln!("pos with window 4 = {:?}", pos);
-    let pos = find_unique_window_posv3(14, contents.as_str());
+    let pos = find_unique_window_posv4(14, contents.as_str());
     eprintln!("pos with window 14 = {:?}", pos);
     Ok(())
 }
