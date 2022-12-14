@@ -1,6 +1,6 @@
 use pathfinding::prelude::bfs;
 use std::error::Error;
-use std::{fs, iter};
+use std::fs;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Copy)]
 struct Coord {
