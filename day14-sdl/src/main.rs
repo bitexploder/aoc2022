@@ -1,6 +1,11 @@
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use sdl2::pixels::Color;
+use sdl2::rect::Rect;
+
 use std::error::Error;
 use std::fs;
-use std::time::Instant;
+use std::time::Duration;
 
 #[derive(Debug, Clone, Copy)]
 struct Coord {
@@ -115,9 +120,9 @@ fn drop_grain(cave: &mut Vec<Vec<Space>>) -> bool {
         below_right = cave[grain.x + 1][grain.y + 1];
 
         let blocked = (
-            matches!(below_left, Space::Rock | Space::Sand),
-            matches!(below, Space::Rock | Space::Sand),
-            matches!(below_right, Space::Rock | Space::Sand),
+            (below_left == Space::Rock || below_left == Space::Sand),
+            (below == Space::Rock || below == Space::Sand),
+            (below_right == Space::Rock || below_right == Space::Sand),
         );
 
         match blocked {
@@ -166,6 +171,33 @@ fn place_floor(cave: &mut Vec<Vec<Space>>) {
     }
     // End part 2
 }
+
+fn render_cave_sdl(cave: &Vec<Vec<Space>>, size: (usize, usize, usize, usize)) {
+    let mut lr: String = String::from("");
+    for i in size.1..size.3 {
+        if i != 500 {
+            lr.push('.');
+        } else {
+            lr.push('+');
+        }
+    }
+    println!("y: ZZZ: {}", lr);
+    for y in size.1..size.3 {
+        lr = String::from("");
+
+        for i in size.0..size.2 {
+            if cave[i][y] == Space::Air {
+                lr.push('.');
+            } else if cave[i][y] == Space::Sand {
+                lr.push('o');
+            } else {
+                lr.push('#');
+            }
+        }
+        println!("y: {:03}: {}", y, lr);
+    }
+}
+
 fn main() -> std::result::Result<(), Box<dyn Error>> {
     // let contents = fs::read_to_string("src/test.txt")?;
     let contents = include_str!("puzzle.txt");
@@ -194,7 +226,6 @@ fn main() -> std::result::Result<(), Box<dyn Error>> {
     place_floor(&mut cave);
 
     let mut grains_dropped = 0;
-
     loop {
         if !drop_grain(&mut cave) {
             break;
@@ -202,15 +233,52 @@ fn main() -> std::result::Result<(), Box<dyn Error>> {
         grains_dropped += 1;
     }
 
+    let sdl_context = sdl2::init().unwrap();
+    let video_subsystem = sdl_context.video().unwrap();
+
+    let window = video_subsystem
+        .window("rust-sdl2 demo", 800, 600)
+        .position_centered()
+        .build()
+        .unwrap();
+
+    let mut canvas = window.into_canvas().build().unwrap();
+
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+    canvas.present();
+    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut i = 0;
+
+    canvas.set_draw_color(Color::RGB(255, 0, 0));
+    canvas.fill_rect(Rect::new(1, 1, 60, 60));
+
+    'running: loop {
+        // i = (i + 1) % 255;
+        // canvas.set_draw_color(Color::RGB(i, 64, 255 - i));
+        // canvas.clear();
+
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. }
+                | Event::KeyDown {
+                    keycode: Some(Keycode::Escape),
+                    ..
+                } => break 'running,
+                _ => {}
+            }
+        }
+        // The rest of the game loop goes here...
+
+        canvas.present();
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+    }
+
     // Testing
     // render_cave(&cave, (488, 0, 516, 14));
     // render_cave(&cave, (495, 25, 525, 36));
     // Puzzle.txt full
     // render_cave(&cave, (300, 0, 700, 163));
-
-    // 1199 part 1
-    // 23925 part 2
     println!("Dropped {} grains", grains_dropped);
-
     Ok(())
 }

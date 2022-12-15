@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let miny = seen.iter().map(|p| p.y).min().unwrap_or(0);
     let maxy = seen.iter().map(|p| p.y).max().unwrap_or(0);
 
-    print!("{}", render_seen(&seen, (minx, maxx, miny, maxy)));
+    // print!("{}", render_seen(&seen, (minx, maxx, miny, maxy)));
 
     Ok(())
 }
